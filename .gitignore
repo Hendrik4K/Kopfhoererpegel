@@ -1,0 +1,10 @@
+# Build output (Windows: Bauen.ps1 creates it again)
+*.exe
+*.pdb
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# Test pictures
+*.png
