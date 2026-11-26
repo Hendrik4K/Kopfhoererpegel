@@ -1,7 +1,6 @@
-# Kopfhörerpegel <img align="right" src="docs/icon.png" height="44" alt="">
+# <img src="docs/icon.png" height="40" alt=""> Kopfhörerpegel <a href="README.en.md"><img align="right" src="docs/flag-gb.svg" height="22" alt="English" title="English"></a><a href="README.md"><img align="right" src="docs/flag-de.svg" height="22" alt="Deutsch" title="Deutsch"></a><img align="right" src="docs/sprache.svg" height="22" alt="Sprache" title="Sprache wählen">
 
 **Wie „Kopfhörerpegel“ auf dem iPhone, nur auf deinem Windows-PC: Fahr mit der Maus aufs Ohr in der Taskleiste und du siehst live, wie laut deine AirPods gerade sind.**
-*Live dB of your AirPods in the Windows tray and on your Stream Deck, like the headphone level on iPhone.*
 
 <p align="center"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6" alt="Windows 10 | 11"> <a href="https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest"><img src="https://img.shields.io/github/v/release/Hendrik4K/Kopfhoererpegel?label=Version&color=30D158" alt="Version"></a> <img src="https://img.shields.io/badge/Stream%20Deck-Plugin-1F1F1F" alt="Stream Deck Plugin"> <img src="https://img.shields.io/badge/AirPods-alle%20Modelle-555" alt="AirPods"></p>
 
@@ -10,7 +9,7 @@
 Grün heißt entspannt, gelb ab 80 dB heißt „mach mal leiser“, rot ab 90 dB heißt „deine Ohren schreiben gerade eine Beschwerde“. Die Leiste pulsiert mit dem Beat, die AirPods bleiben dabei im Musikmodus, und gemessen wird nur, was Windows sowieso an sie schickt. Kein Konto, kein Schnickschnack, ein Symbol in der Taskleiste.
 
 **⬇ Kostenlos:** [Releases](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest) → `Kopfhoererpegel.exe` (Tray-App) und `Headphone-Level.streamDeckPlugin` (Doppelklick installiert es in Stream Deck).
-**⭐ Gefällt’s dir? Lass einen Stern da – leave a star if you like it!**
+**⭐ Gefällt’s dir? Lass einen Stern da!**
 Lieber unterstützen? Die gleiche Stream-Deck-Version gibt es für 0,99 € im Elgato Marketplace.
 
 <details>
@@ -58,7 +57,6 @@ Maus weg von Karte und Symbol, und die Karte blendet sich aus. Die Einstellungen
 
 <p align="center"><img src="docs/streamdeck.png" width="820" alt="Headphone Level auf dem Stream Deck: OK, Laut und Sehr laut"></p>
 
-
 Plugin `streamdeck/de.hendrik4k.kopfhoererpegel.sdPlugin`: Aktion „Kopfhörerpegel“ auf eine Taste ziehen.
 Die Taste zeigt Status mit Badge, dB-Zahl (bei Laut/Sehr laut in der Statusfarbe) und die 18-Segment-Leiste, deren vorderste
 Segmente wie auf der Karte mit dem Beat pulsieren. Drücken wechselt zum Verlauf der letzten 60 Sekunden (Balken in Statusfarbe,
@@ -87,7 +85,6 @@ Fehler landen in `%LOCALAPPDATA%\Kopfhoererpegel\streamdeck.log`.
 <details>
 <summary><b>📏 Wie gemessen wird</b></summary>
 
-
 Wie beim iPhone **berechnet**, nicht im Ohr gemessen:
 WASAPI-Loopback auf dem AirPods-Stereo-Endpunkt (A2DP) → A-Bewertung → 1-Sekunden-Mittel →
 + Windows-Lautstärke der AirPods (Bluetooth-Hardwarelautstärke, Loopback liegt davor) + Kalibrierung (Standard 106 dB).
@@ -96,7 +93,6 @@ Der Freisprech-Endpunkt (Hands-Free) wird absichtlich nicht geöffnet, damit die
 Kalibrieren: gleiches Lied am iPhone und am PC bei gleicher Lautstärke vergleichen und per Rechtsklick → Kalibrierung ±1 dB anpassen.
 Einstellung liegt in `%LOCALAPPDATA%\Kopfhoererpegel\einstellungen.txt`.
 
-
 </details>
 
 <details>
@@ -104,8 +100,7 @@ Einstellung liegt in `%LOCALAPPDATA%\Kopfhoererpegel\einstellungen.txt`.
 
 Kein SDK nötig, der C#-Compiler von .NET Framework ist bei Windows dabei.
 
-
-- `Bauen.ps1` (C#-Compiler aus .NET Framework, kein SDK nötig) → `Kopfhoererpegel.exe`
+- `Bauen.ps1` → `Kopfhoererpegel.exe`
 - `--probe <datei>` listet die Audio-Endpunkte und schreibt 4 s Messwerte in die Datei
 - `--demo` zeigt Fantasiewerte, `--show` öffnet die Karte gleich gepinnt
 - `--render-tray <ordner>` speichert alle Symbolzustände als PNG
@@ -142,7 +137,6 @@ Tray-Symbol: Ohr mit Badge (grüner Haken, gelbes Ausrufezeichen, rotes Warndrei
 <summary><b>📜 Lizenz</b></summary>
 
 Privat kostenlos nutzbar. Weitergeben, Verkaufen und Kopieren sind nicht erlaubt, siehe [LICENSE.md](LICENSE.md).
-*Free for personal use; no redistribution, resale or copies, see [LICENSE.md](LICENSE.md).*
 
 AirPods und iPhone sind Marken von Apple Inc., Stream Deck und Elgato von Corsair. Dieses Projekt ist mit keiner der Firmen verbunden.
 
