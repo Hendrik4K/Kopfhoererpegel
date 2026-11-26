@@ -23,6 +23,21 @@ The Windows app's interface is in German for now; the Stream Deck plugin follows
 
 **Stream Deck:** double-click `Headphone-Level.streamDeckPlugin`, then drag "Level" or "History" from the "Headphone Level" category onto a key.
 
+**Feeling relaxed?** Then just hand this prompt to your AI agent (e.g. Claude Code or Codex on your PC). It checks what is already there, downloads the right file, verifies it and asks you before changing anything.
+
+```text
+Help me set up Headphone Level (github.com/Hendrik4K/Kopfhoererpegel) on this Windows PC so I can see the live level of my AirPods in the taskbar.
+Only check first and ask me before every change:
+1. Windows 10/11? Are AirPods paired via Bluetooth and connected right now (an audio endpoint with "AirPods" in its name)? If not, tell me how to connect them.
+2. Download `Kopfhoererpegel.exe` and `Kopfhoererpegel.exe.sha256` from the latest GitHub release and compare the SHA256. Stop if it does not match.
+3. Suggest a permanent folder (e.g. `%USERPROFILE%\Documents\Kopfhoererpegel`), put the exe there after my OK and remove the download mark (Unblock-File).
+4. Start the exe after my OK via `explorer.exe` (not as a child process of your shell).
+5. Ask me whether it should start with Windows. If yes: right-click the ear icon → tick "Mit Windows starten" (or, after my OK, create the HKCU Run entry "Kopfhoererpegel").
+6. Ask me whether I have an Elgato Stream Deck. If yes: download `Headphone-Level.streamDeckPlugin` with its .sha256, verify the hash and only install it by double-click after my OK.
+7. At the end, tell me where the ear sits in the taskbar (maybe in the ^ overflow, then drag it onto the taskbar) and how to match my iPhone via right-click → Kalibrierung ±1 dB.
+Do not change my audio settings and do not install any other software.
+```
+
 </details>
 
 <details>

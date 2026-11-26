@@ -21,6 +21,21 @@ Lieber unterstützen? Die gleiche Stream-Deck-Version gibt es für 0,99 € im E
 
 **Stream Deck:** `Headphone-Level.streamDeckPlugin` doppelklicken, dann „Pegel“ oder „Verlauf“ aus der Kategorie „Kopfhörerpegel“ auf eine Taste ziehen.
 
+**Du bist ein entspannter Typ oder ein entspanntes Girl?** Dann gib einfach diesen Prompt an deinen KI-Agenten (z. B. Claude Code oder Codex auf deinem PC). Er schaut nach, was schon da ist, lädt die richtige Datei, prüft sie und fragt dich bei allem, was er ändern will.
+
+```text
+Hilf mir, Kopfhörerpegel (github.com/Hendrik4K/Kopfhoererpegel) auf diesem Windows-PC einzurichten, damit ich den Pegel meiner AirPods live in der Taskleiste sehe.
+Prüfe zuerst nur und frag mich vor jeder Änderung:
+1. Windows 10/11? Sind AirPods per Bluetooth gekoppelt und gerade verbunden (Audio-Endpunkt mit „AirPods“ im Namen)? Wenn nicht, sag mir, wie ich sie verbinde.
+2. Lade `Kopfhoererpegel.exe` und `Kopfhoererpegel.exe.sha256` aus dem neuesten GitHub-Release und vergleiche die SHA256. Bei Abweichung abbrechen.
+3. Schlag mir einen festen Ordner vor (z. B. `%USERPROFILE%\Documents\Kopfhoererpegel`), leg die exe nach meinem OK dort ab und entferne den Download-Vermerk (Unblock-File).
+4. Starte die exe nach meinem OK über `explorer.exe` (nicht als Kindprozess deiner Shell).
+5. Frag mich, ob sie mit Windows starten soll. Wenn ja: Rechtsklick aufs Ohr-Symbol → „Mit Windows starten“ anhaken (oder du legst nach meinem OK den Run-Eintrag „Kopfhoererpegel“ unter HKCU an).
+6. Frag mich, ob ich ein Elgato Stream Deck habe. Wenn ja: `Headphone-Level.streamDeckPlugin` samt .sha256 laden, Hash prüfen und erst nach meinem OK per Doppelklick installieren.
+7. Sag mir am Ende, wo das Ohr in der Taskleiste sitzt (eventuell im ^-Überlauf, dann in die Leiste ziehen) und wie ich per Rechtsklick → Kalibrierung ±1 dB an mein iPhone angleiche.
+Ändere nichts an meinen Audio-Einstellungen und installiere keine weitere Software.
+```
+
 </details>
 
 <details>
