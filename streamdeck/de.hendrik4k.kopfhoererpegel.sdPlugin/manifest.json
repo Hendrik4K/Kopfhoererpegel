@@ -10,6 +10,7 @@
   "Icon": "bilder/plugin",
   "Category": "Headphone Level",
   "CategoryIcon": "bilder/kategorie",
+  "URL": "https://github.com/Hendrik4K/Kopfhoererpegel",
   "OS": [
     {
       "Platform": "windows",

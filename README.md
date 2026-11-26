@@ -1,4 +1,15 @@
-# Kopfhörerpegel
+# Kopfhörerpegel / Headphone Level
+
+Live-dB deiner AirPods im Windows-Tray und auf dem Stream Deck, wie „Kopfhörerpegel“ auf dem iPhone.
+Live dB of your AirPods in the Windows tray and on your Stream Deck, like the headphone level on iPhone.
+
+**⬇ Kostenlos / Free:** fertige Dateien unter [Releases](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest):
+`Kopfhoererpegel.exe` (Tray-App) und `Headphone-Level.streamDeckPlugin` (Doppelklick installiert es in Stream Deck).
+**⭐ Gefällt’s dir? Lass einen Stern da – Leave a star if you like it!**
+Lieber unterstützen? Die gleiche Version gibt es für 0,99 € im Elgato Marketplace.
+
+Lizenz: privat kostenlos nutzbar, Weitergeben, Verkaufen und Kopieren nicht erlaubt, siehe [LICENSE.md](LICENSE.md).
+License: free for personal use; no redistribution, resale or copies, see [LICENSE.md](LICENSE.md).
 
 | Plattform | Ordner | Technik | Quellen |
 | --- | --- | --- | --- |

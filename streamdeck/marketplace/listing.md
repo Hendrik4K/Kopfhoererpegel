@@ -17,7 +17,13 @@ How it works: the plugin reads what Windows sends to your AirPods (passive loopb
 
 Requirements: Windows 10 or 11, AirPods (any model) connected via Bluetooth. Works in English and German.
 
+Free for personal use: you can also download it for free on GitHub (github.com/Hendrik4K/Kopfhoererpegel). Buying it here supports the development. Leave a star on GitHub if you like it!
+
 AirPods and iPhone are trademarks of Apple Inc. This plugin is not affiliated with or endorsed by Apple.
+
+## Additional links
+- Source & free download: https://github.com/Hendrik4K/Kopfhoererpegel
+- Support / issues: https://github.com/Hendrik4K/Kopfhoererpegel/issues
 
 ## Keywords
 AirPods, headphones, hearing, volume, dB, decibel, sound level, loudness, audio, health
