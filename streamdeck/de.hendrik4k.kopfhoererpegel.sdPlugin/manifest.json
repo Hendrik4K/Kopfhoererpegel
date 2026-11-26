@@ -4,7 +4,7 @@
   "Name": "Headphone Level",
   "Author": "Hendrik4K",
   "Description": "Live dB of your AirPods on a key, like the headphone level on iPhone: status, dB value and a segment bar that pulses with the beat. Flashes red when it gets very loud. Press to see the last 60 seconds.",
-  "Version": "1.0.0.0",
+  "Version": "26.11.26.0",
   "SDKVersion": 3,
   "CodePath": "kopfhoererpegel-streamdeck.exe",
   "Icon": "bilder/plugin",
