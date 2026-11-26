@@ -11,8 +11,8 @@ using Drawing = System.Drawing;
 
 namespace Kopfhoererpegel
 {
-    // Tray icon for the AirPods headphone level. Hover shows the live dB card, a left click pins it, right click
-    // has calibration, autostart and quit.
+    // Tray icon for the AirPods headphone level. Hover shows the live dB card, a left click pins it, a right click
+    // turns the card into the settings (autostart, calibration, quit, restart).
     public static class Program
     {
         static Forms.NotifyIcon tray;
@@ -25,12 +25,15 @@ namespace Kopfhoererpegel
         const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
         // --probe <file>: endpoint + level check without UI. --render-tray <dir>: tray icon states as PNG.
+        // --render-icon <file.ico>: app icon. --render-shots <dir> <wallpaper>: README pictures and GIF frames.
         // --demo: fake levels (for looking at the card without audio). --show: open the card pinned at start.
         [STAThread]
         public static int Main(string[] args)
         {
             if (args.Length == 2 && args[0] == "--probe") { Meter.Probe(args[1]); return 0; }
             if (args.Length == 2 && args[0] == "--render-tray") { RenderTrayStates(args[1]); return 0; }
+            if (args.Length == 2 && args[0] == "--render-icon") { Shots.SaveIcon(args[1]); return 0; }
+            if (args.Length == 3 && args[0] == "--render-shots") { Shots.Render(args[1], args[2]); return 0; }
             using (var single = new Mutex(false, "Hendrik4K.Kopfhoererpegel"))
             {
                 // After "Neu starten" the new instance waits until the old one has let go.
@@ -49,38 +52,38 @@ namespace Kopfhoererpegel
                 // Create the window handle (and its frosted backdrop) now, not in the middle of a tray mouse event.
                 new System.Windows.Interop.WindowInteropHelper(popup).EnsureHandle();
 
-                var menu = new Forms.ContextMenuStrip();
-                var calib = new Forms.ToolStripMenuItem();
-                Action showCalib = () => calib.Text = "Kalibrierung: " + meter.Calibration.ToString("0") + " dB";
-                showCalib();
-                calib.DropDownItems.Add("+1 dB (Anzeige höher)", null, delegate { meter.Calibration += 1; SaveSettings(); showCalib(); });
-                calib.DropDownItems.Add("−1 dB (Anzeige niedriger)", null, delegate { meter.Calibration -= 1; SaveSettings(); showCalib(); });
-                calib.DropDownItems.Add("Zurücksetzen (106 dB)", null, delegate { meter.Calibration = 106; SaveSettings(); showCalib(); });
-                menu.Items.Add(calib);
-                var autostart = new Forms.ToolStripMenuItem("Mit Windows starten") { Checked = AutostartOn() };
-                autostart.Click += delegate { SetAutostart(!autostart.Checked); autostart.Checked = AutostartOn(); };
-                menu.Items.Add(autostart);
-                menu.Items.Add(new Forms.ToolStripSeparator());
-                menu.Items.Add("Neu starten", null, delegate
+                // Settings live in the card itself (right click), no context menu.
+                popup.Quit = () => { tray.Visible = false; meter.Stop(); app.Shutdown(); };
+                popup.Restart = () =>
                 {
                     tray.Visible = false;
                     meter.Stop();
                     System.Diagnostics.Process.Start(Forms.Application.ExecutablePath, "--restart" + (demo ? " --demo" : ""));
                     app.Shutdown();
-                });
-                menu.Items.Add("Beenden", null, delegate { tray.Visible = false; meter.Stop(); app.Shutdown(); });
+                };
+                popup.AutostartOn = AutostartOn;
+                popup.SetAutostart = SetAutostart;
+                popup.GetCalibration = () => meter.Calibration;
+                popup.SetCalibration = v => { meter.Calibration = v; SaveSettings(); };
 
                 // No tooltip text: the card is the tooltip.
-                tray = new Forms.NotifyIcon { Text = "", ContextMenuStrip = menu, Visible = demo };
+                tray = new Forms.NotifyIcon { Text = "", Visible = demo };
                 tray.MouseMove += delegate { if (!popup.IsVisible || popup.FadingOut) Open(); outsideSince = DateTime.MaxValue; };
                 tray.MouseClick += (s, e) =>
                 {
+                    if (e.Button == Forms.MouseButtons.Right)
+                    {
+                        popup.Pinned = false;
+                        popup.ShowView(true, !popup.IsVisible || popup.FadingOut);
+                        Open();
+                        return;
+                    }
                     if (e.Button != Forms.MouseButtons.Left) return;
-                    if (popup.Pinned) { popup.FadeOut(); return; }
+                    if (popup.Pinned && !popup.SettingsShown) { popup.FadeOut(); return; }
+                    popup.ShowView(false, !popup.IsVisible || popup.FadingOut);
                     Open();
                     popup.Pinned = true;
                 };
-                menu.Opening += delegate { popup.FadeOut(); };
                 AnimateTray(Current());
 
                 // 30 fps: bar animation, tray state, hover check. Texts 4x per second.
@@ -94,10 +97,10 @@ namespace Kopfhoererpegel
                     popup.Animate(r);
                     if (frame++ % 8 == 0) popup.Render(r);
                     if (popup.Pinned || popup.FadingOut) return;
-                    // Hover ends a moment after the cursor left the icon.
-                    if (CursorOnIcon()) outsideSince = DateTime.MaxValue;
+                    // The card stays while the mouse is on the icon or on the card, and goes a moment after it left both.
+                    if (CursorOnIcon() || popup.CursorOnCard()) outsideSince = DateTime.MaxValue;
                     else if (outsideSince == DateTime.MaxValue) outsideSince = DateTime.Now;
-                    else if ((DateTime.Now - outsideSince).TotalMilliseconds > 300) popup.FadeOut();
+                    else if ((DateTime.Now - outsideSince).TotalMilliseconds > (popup.SettingsShown ? 500 : 300)) popup.FadeOut();
                 };
                 timer.Start();
                 if (args.Contains("--show")) app.Dispatcher.BeginInvoke(new Action(() => { Open(); popup.Pinned = true; }));
@@ -234,7 +237,7 @@ namespace Kopfhoererpegel
 
         // Ear with a status badge (green check, yellow exclamation mark, red warning triangle) and three dots underneath
         // (dots[i] 0 = dim, 1 = full colour). Drawn on a 64-unit grid, 4x oversampled and scaled down for clean edges.
-        static Drawing.Bitmap RenderTray(int size, Status s, double[] dots, bool light)
+        internal static Drawing.Bitmap RenderTray(int size, Status s, double[] dots, bool light)
         {
             const int k = 4;
             var big = new Drawing.Bitmap(size * k, size * k);

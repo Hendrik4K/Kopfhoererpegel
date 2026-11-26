@@ -1,3 +1,5 @@
+﻿# -Ausgabe <datei>: anderer Zielpfad (zum Testen, während die App läuft).
+param([string]$Ausgabe)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
@@ -7,9 +9,10 @@ $refs = 'System.dll', 'System.Core.dll', 'System.Drawing.dll', 'System.Windows.F
         'System.Xaml.dll', 'WPF\WindowsBase.dll', 'WPF\PresentationCore.dll', 'WPF\PresentationFramework.dll' |
         ForEach-Object { '/reference:' + (Join-Path $fw $_) }
 $sources = (Get-ChildItem -LiteralPath "$root\src" -Filter '*.cs').FullName
+$out = if ($Ausgabe) { $Ausgabe } else { "$root\Kopfhoererpegel.exe" }
 $icon = if (Test-Path "$root\Kopfhoererpegel.ico") { "/win32icon:$root\Kopfhoererpegel.ico" }
 
 & (Join-Path $fw 'csc.exe') /nologo /codepage:65001 /target:winexe /platform:anycpu /optimize+ `
-    "/win32manifest:$root\src\App.manifest" $icon "/out:$root\Kopfhoererpegel.exe" @refs $sources
+    "/win32manifest:$root\src\App.manifest" $icon "/out:$out" @refs $sources
 if ($LASTEXITCODE) { throw 'Kompilierung fehlgeschlagen.' }
-Write-Host "Gebaut: $root\Kopfhoererpegel.exe"
+Write-Host "Gebaut: $out"

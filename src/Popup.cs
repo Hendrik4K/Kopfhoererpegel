@@ -115,11 +115,17 @@ namespace Kopfhoererpegel
             Canvas.SetLeft(max, BarWidth - 40);
             labels.Children.Add(max);
 
-            var stack = new StackPanel { Margin = new Thickness(28, 18, 28, 16) };
+            var stack = levelView;
+            stack.Margin = new Thickness(28, 18, 28, 16);
             stack.Children.Add(title);
             stack.Children.Add(row);
             stack.Children.Add(bar);
             stack.Children.Add(labels);
+            // Both views share one cell, so the card keeps its size when it switches between them.
+            views.Children.Add(levelView);
+            views.Children.Add(BuildSettings());
+            settingsView.Visibility = Visibility.Hidden;
+            SourceInitialized += delegate { NoActivate(); };
             // Frosted card with big iOS-like corners: a blurred picture of what lies behind the card (taken when it opens), a dark tint,
             // a thin light rim, then the content, all clipped to a rounded rectangle (anti-aliased, unlike a window region).
             backdrop.Stretch = Stretch.Fill;
@@ -131,7 +137,7 @@ namespace Kopfhoererpegel
             rim.BorderThickness = new Thickness(1);
             rim.BorderBrush = new SolidColorBrush(Color.FromArgb(0x38, 0xFF, 0xFF, 0xFF));
             card.Children.Add(rim);
-            card.Children.Add(stack);
+            card.Children.Add(views);
             card.SizeChanged += delegate { SetCorner(corner); };
             card.RenderTransform = slide;
             Content = card;
@@ -195,7 +201,7 @@ namespace Kopfhoererpegel
             Opacity = fadeFrom + (fadeTo - fadeFrom) * eased;
             if (t < 1) return;
             fade.Stop();
-            if (FadingOut) { Hide(); FadingOut = false; }
+            if (FadingOut) { Hide(); FadingOut = false; ShowView(false, true); }
         }
 
         static TextBlock Label(string text, double x, bool centered)
@@ -281,6 +287,268 @@ namespace Kopfhoererpegel
         {
             Func<byte, byte, byte> mix = (x, y) => (byte)Math.Round(x + (y - x) * t);
             return Color.FromArgb(mix(a.A, b.A), mix(a.R, b.R), mix(a.G, b.G), mix(a.B, b.B));
+        }
+
+        // ---- settings view (right click on the tray icon) ----------------------------------------------------------
+        // Left: "Mit Windows starten" to tick, below it "Kalibrierung", which unfolds its buttons on hover.
+        // Right: a big "Beenden" button with "Neu starten" as a link underneath.
+
+        public Action Quit, Restart;
+        public Func<bool> AutostartOn;
+        public Action<bool> SetAutostart;
+        public Func<double> GetCalibration;
+        public Action<double> SetCalibration;
+        public const double DefaultCalibration = 106;
+        public bool SettingsShown { get; private set; }
+
+        readonly StackPanel levelView = new StackPanel();
+        readonly Grid views = new Grid();
+        readonly StackPanel settingsView = new StackPanel();
+        readonly Border check = new Border();
+        readonly Path checkMark = new Path();
+        readonly TextBlock calibValue = new TextBlock();
+        readonly StackPanel calibOptions = new StackPanel { Orientation = Orientation.Horizontal };
+        readonly TranslateTransform optionsSlide = new TranslateTransform();
+        readonly RotateTransform chevronTurn = new RotateTransform();
+        readonly Border quit = new Border();
+        readonly TextBlock restart = new TextBlock();
+        FrameworkElement calibRow, autostartRow;
+        readonly DispatcherTimer anim = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(15) };
+        double expand, expandTarget;       // 0 = calibration buttons folded away, 1 = unfolded
+        double viewMix = 1;                // fade-in of the view that just became visible
+
+        static SolidColorBrush Brush(Color c) { return new SolidColorBrush(c); }
+        static Color Alpha(Color c, byte a) { return Color.FromArgb(a, c.R, c.G, c.B); }
+
+        FrameworkElement BuildSettings()
+        {
+            var v = settingsView;
+            v.Margin = new Thickness(28, 18, 28, 16);
+            v.Width = BarWidth;
+            v.Children.Add(new TextBlock { Text = "Einstellungen", FontSize = 15, FontWeight = FontWeights.SemiBold, Foreground = Brush(Muted) });
+
+            // Check box in the style of the card: rounded square, green with a dark tick when on.
+            check.Width = check.Height = 22;
+            check.CornerRadius = new CornerRadius(7);
+            check.BorderThickness = new Thickness(1.6);
+            checkMark.Data = Geometry.Parse("M5.6,11.2 L9.2,14.6 L16.2,7.4");
+            checkMark.Stroke = Brush(Dark);
+            checkMark.StrokeThickness = 2.4;
+            checkMark.StrokeStartLineCap = checkMark.StrokeEndLineCap = PenLineCap.Round;
+            checkMark.StrokeLineJoin = PenLineJoin.Round;
+            checkMark.Margin = new Thickness(-1.6);
+            check.Child = checkMark;
+            var autoText = new TextBlock { Text = "Mit Windows starten", FontSize = 16, Foreground = Brush(Text), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 1) };
+            var auto = new StackPanel { Orientation = Orientation.Horizontal, Background = Brushes.Transparent, Cursor = System.Windows.Input.Cursors.Hand, VerticalAlignment = VerticalAlignment.Top };
+            auto.Children.Add(check);
+            auto.Children.Add(autoText);
+            auto.MouseEnter += delegate { HoverAutostart(true); };
+            auto.MouseLeave += delegate { HoverAutostart(false); };
+            auto.MouseLeftButtonUp += delegate { if (SetAutostart != null) SetAutostart(!AutostartOn()); RefreshSettings(); };
+            autostartRow = auto;
+
+            // "Kalibrierung  106 dB ⌄": hovering unfolds the buttons below.
+            var chevron = new Path
+            {
+                Data = Geometry.Parse("M0,0 L5,5 L10,0"), Stroke = Brush(Muted), StrokeThickness = 1.8, Width = 10, Height = 5,
+                StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(9, 2, 0, 0),
+                RenderTransform = chevronTurn, RenderTransformOrigin = new Point(0.5, 0.5)
+            };
+            calibValue.FontSize = 16; calibValue.Foreground = Brush(Muted); calibValue.Margin = new Thickness(8, 0, 0, 0);
+            var calib = new StackPanel { Orientation = Orientation.Horizontal, Background = Brushes.Transparent, Margin = new Thickness(0, 12, 0, 0) };
+            calib.Children.Add(new TextBlock { Text = "Kalibrierung", FontSize = 16, Foreground = Brush(Text) });
+            calib.Children.Add(calibValue);
+            calib.Children.Add(chevron);
+            calib.MouseEnter += delegate { Unfold(true); };
+            calib.MouseLeave += delegate { MaybeFold(); };
+            calibRow = calib;
+
+            // The buttons unfold under "Kalibrierung" in the left column, so both views of the card are the same height.
+            calibOptions.Margin = new Thickness(0, 8, 0, 0);
+            calibOptions.RenderTransform = optionsSlide;
+            calibOptions.Background = Brushes.Transparent;
+            calibOptions.Children.Add(Pill("−1 dB", () => GetCalibration() - 1));
+            calibOptions.Children.Add(Pill("+1 dB", () => GetCalibration() + 1));
+            var reset = Pill("", () => DefaultCalibration);
+            ((TextBlock)reset.Child).FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets");
+            ((TextBlock)reset.Child).FontSize = 13;
+            reset.Width = 30; reset.Padding = new Thickness(0, 1, 0, 0);
+            ((TextBlock)reset.Child).HorizontalAlignment = HorizontalAlignment.Center;
+            calibOptions.Children.Add(reset);
+            calibOptions.MouseLeave += delegate { MaybeFold(); };
+            var left = new StackPanel();
+            left.Children.Add(auto);
+            left.Children.Add(calib);
+            left.Children.Add(calibOptions);
+
+            // Big "Beenden" on the right, "Neu starten" as a link under it.
+            quit.Width = 112; quit.Height = 50;
+            quit.CornerRadius = new CornerRadius(25);
+            quit.Cursor = System.Windows.Input.Cursors.Hand;
+            quit.Child = new TextBlock { Text = "Beenden", FontSize = 18, FontWeight = FontWeights.SemiBold, Foreground = Brush(Red), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 2) };
+            quit.MouseEnter += delegate { HoverQuit(true); };
+            quit.MouseLeave += delegate { HoverQuit(false); };
+            quit.MouseLeftButtonUp += delegate { if (Quit != null) Quit(); };
+            HoverQuit(false);
+            restart.Text = "Neu starten"; restart.FontSize = 14; restart.HorizontalAlignment = HorizontalAlignment.Center;
+            restart.Margin = new Thickness(0, 8, 0, 0); restart.Cursor = System.Windows.Input.Cursors.Hand;
+            restart.Background = Brushes.Transparent; restart.Padding = new Thickness(6, 0, 6, 2);
+            restart.MouseEnter += delegate { HoverRestart(true); };
+            restart.MouseLeave += delegate { HoverRestart(false); };
+            restart.MouseLeftButtonUp += delegate { if (Restart != null) Restart(); };
+            HoverRestart(false);
+            var right = new StackPanel { Margin = new Thickness(12, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            right.Children.Add(quit);
+            right.Children.Add(restart);
+
+            var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(right, 1);
+            grid.Children.Add(left);
+            grid.Children.Add(right);
+            v.Children.Add(grid);
+
+            anim.Tick += delegate { AnimStep(); };
+            ApplyExpand();
+            return v;
+        }
+
+        Border Pill(string text, Func<double> value)
+        {
+            var b = new Border
+            {
+                Height = 30, CornerRadius = new CornerRadius(15), Padding = new Thickness(12, 0, 12, 1), Margin = new Thickness(0, 0, 7, 0),
+                Background = Brush(Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF)), Cursor = System.Windows.Input.Cursors.Hand,
+                Child = new TextBlock { Text = text, FontSize = 14, Foreground = Brush(Text), VerticalAlignment = VerticalAlignment.Center }
+            };
+            b.MouseEnter += delegate { HoverPill(b, true); };
+            b.MouseLeave += delegate { HoverPill(b, false); };
+            b.MouseLeftButtonUp += delegate { if (SetCalibration != null) SetCalibration(value()); RefreshSettings(); };
+            return b;
+        }
+
+        // Hover looks, public so the screenshot renderer can show them too.
+        public void HoverPill(int index, bool on) { HoverPill((Border)calibOptions.Children[index], on); }
+        static void HoverPill(Border b, bool on) { b.Background = Brush(Color.FromArgb(on ? (byte)0x48 : (byte)0x24, 0xFF, 0xFF, 0xFF)); }
+        public void HoverQuit(bool on) { quit.Background = Brush(Alpha(Red, on ? (byte)0x5C : (byte)0x2E)); }
+        public void HoverRestart(bool on)
+        {
+            restart.Foreground = Brush(on ? Text : Muted);
+            restart.TextDecorations = on ? TextDecorations.Underline : null;
+        }
+        bool autostartHover;
+        public void HoverAutostart(bool on) { autostartHover = on; RefreshSettings(); }
+
+        public void RefreshSettings()
+        {
+            var auto = AutostartOn != null && AutostartOn();
+            check.Background = auto ? Brush(Green) : Brushes.Transparent;
+            check.BorderBrush = Brush(auto ? Green : Color.FromArgb(autostartHover ? (byte)0xB0 : (byte)0x70, 0xFF, 0xFF, 0xFF));
+            checkMark.Visibility = auto ? Visibility.Visible : Visibility.Hidden;
+            calibValue.Text = GetCalibration != null ? GetCalibration().ToString("0") + " dB" : "";
+        }
+
+        public void Unfold(bool open, bool instant = false)
+        {
+            expandTarget = open ? 1 : 0;
+            if (instant) { expand = expandTarget; ApplyExpand(); }
+            else anim.Start();
+        }
+
+        // Folds the buttons away once the mouse is neither on "Kalibrierung" nor on the buttons.
+        void MaybeFold()
+        {
+            Dispatcher.BeginInvoke(new Action(() => { if (!calibRow.IsMouseOver && !calibOptions.IsMouseOver) Unfold(false); }), DispatcherPriority.Input);
+        }
+
+        void AnimStep()
+        {
+            var speed = expandTarget > expand ? 0.22 : 0.3;
+            expand += (expandTarget - expand) * speed;
+            if (Math.Abs(expandTarget - expand) < 0.01) expand = expandTarget;
+            viewMix = Math.Min(1, viewMix + 0.12);
+            ApplyExpand();
+            if (expand == expandTarget && viewMix >= 1) anim.Stop();
+        }
+
+        void ApplyExpand()
+        {
+            calibOptions.Opacity = expand;
+            optionsSlide.Y = -10 * (1 - expand);
+            chevronTurn.Angle = 180 * expand;
+            calibOptions.IsHitTestVisible = expand > 0.5;
+            var eased = 1 - Math.Pow(1 - viewMix, 3);
+            (SettingsShown ? (UIElement)settingsView : levelView).Opacity = eased;
+        }
+
+        // Switches between the level and the settings; the new view fades in quickly.
+        public void ShowView(bool settings, bool instant = false)
+        {
+            if (settings == SettingsShown && !instant) return;
+            SettingsShown = settings;
+            IsHitTestVisible = settings;
+            if (settings) RefreshSettings();
+            Unfold(false, true);
+            HoverQuit(false); HoverRestart(false);
+            settingsView.Visibility = settings ? Visibility.Visible : Visibility.Hidden;
+            levelView.Visibility = settings ? Visibility.Hidden : Visibility.Visible;
+            viewMix = instant ? 1 : 0;
+            ApplyExpand();
+            if (!instant) anim.Start();
+        }
+
+        [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr hWnd, int index);
+        [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr hWnd, int index, int value);
+        [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hWnd, out WinRect rect);
+        [StructLayout(LayoutKind.Sequential)] struct WinRect { public int Left, Top, Right, Bottom; }
+
+        // Clicks on the card never take the focus away from the window you are working in.
+        void NoActivate()
+        {
+            var h = new WindowInteropHelper(this).Handle;
+            SetWindowLong(h, -20, GetWindowLong(h, -20) | 0x08000000 | 0x80);  // WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW
+        }
+
+        // Is the mouse on the card (screen pixels)?
+        public bool CursorOnCard()
+        {
+            if (!IsVisible) return false;
+            WinRect r;
+            if (!GetWindowRect(new WindowInteropHelper(this).Handle, out r)) return false;
+            var p = System.Windows.Forms.Cursor.Position;
+            return p.X >= r.Left && p.X < r.Right && p.Y >= r.Top && p.Y < r.Bottom;
+        }
+
+        // ---- screenshot renderer (Shots.cs) ----
+
+        public FrameworkElement Card { get { return card; } }
+
+        public void SetMixForRender(double mix, double unfold)
+        {
+            viewMix = mix; expand = unfold; ApplyExpand();
+        }
+
+        // Background picture from a given image (scene pixels) instead of the screen.
+        public void UseBackdrop(BitmapSource picture, double xDip, double yDip, double pxPerDip)
+        {
+            int pad = (int)Math.Ceiling(BlurRadius * pxPerDip);
+            int x0 = Math.Max(0, (int)(xDip * pxPerDip) - pad), y0 = Math.Max(0, (int)(yDip * pxPerDip) - pad);
+            int x1 = Math.Min(picture.PixelWidth, (int)Math.Ceiling((xDip + card.ActualWidth) * pxPerDip) + pad);
+            int y1 = Math.Min(picture.PixelHeight, (int)Math.Ceiling((yDip + card.ActualHeight) * pxPerDip) + pad);
+            backdrop.Source = new CroppedBitmap(picture, new Int32Rect(x0, y0, x1 - x0, y1 - y0));
+            backdrop.Width = (x1 - x0) / pxPerDip; backdrop.Height = (y1 - y0) / pxPerDip;
+            Canvas.SetLeft(backdrop, x0 / pxPerDip - xDip); Canvas.SetTop(backdrop, y0 / pxPerDip - yDip);
+        }
+
+        // Position of an element of the settings view on the card (for the mouse pointer in the GIFs).
+        public Point Where(string name)
+        {
+            FrameworkElement e = name == "auto" ? autostartRow : name == "calib" ? calibRow : name == "quit" ? quit
+                               : name == "restart" ? (FrameworkElement)restart : (FrameworkElement)calibOptions.Children[int.Parse(name)];
+            var p = e.TranslatePoint(new Point(0, 0), card);
+            return new Point(p.X + e.ActualWidth / 2, p.Y + e.ActualHeight / 2);
         }
 
         // trayLeft/Right/Top: tray icon rectangle in device pixels.

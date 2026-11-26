@@ -10,3 +10,5 @@ venv/
 *.png
 # Stream Deck package (streamdeck/Bauen.ps1 -Paket creates it)
 *.streamDeckPlugin
+# README pictures (tools/gifs.py)
+!docs/*.png

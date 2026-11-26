@@ -3,6 +3,8 @@
 Live-dB deiner AirPods im Windows-Tray und auf dem Stream Deck, wie „Kopfhörerpegel“ auf dem iPhone.
 Live dB of your AirPods in the Windows tray and on your Stream Deck, like the headphone level on iPhone.
 
+<p align="center"><img src="docs/pegel-ablauf.gif" width="820" alt="Maus auf das Ohr-Symbol in der Taskleiste: die Karte zeigt den Pegel live, von OK über Laut bis Sehr laut"></p>
+
 **⬇ Kostenlos / Free:** fertige Dateien unter [Releases](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest):
 `Kopfhoererpegel.exe` (Tray-App) und `Headphone-Level.streamDeckPlugin` (Doppelklick installiert es in Stream Deck).
 **⭐ Gefällt’s dir? Lass einen Stern da – Leave a star if you like it!**
@@ -25,7 +27,12 @@ Linux-Version steckt in `linux/pegel/quellen/linux_pulse.py`.
 Tray-Symbol für die AirPods: Maus drüber → Karte mit Live-dB im Stil von „Kopfhörerpegel“ auf dem iPhone:
 Status mit Symbol (OK grün · Laut gelb ab 80 dB · Sehr laut rot ab 90 dB), dB-Zahl (bei Laut/Sehr laut in der Statusfarbe)
 und 18 Segmente à 5 dB von 20 bis 110 dB. Die Leiste füllt sich ruhig mit dem 1-Sekunden-Pegel; nur die beiden vordersten Segmente leben mit dem Beat (Sättigung folgt dem 125-ms-Pegel in festen Stufen: das äußerste 4 Stufen stark, das davor 5 Stufen dezent), alles links davon steht still; die Skala 20 / 80 / 110 bleibt immer gleich. Linksklick pinnt die Karte, nochmal klicken schließt sie.
-Rechtsklick: Kalibrierung, „Mit Windows starten“, Neu starten, Beenden.
+Die Karte bleibt offen, solange die Maus auf dem Symbol oder auf der Karte ist, und blendet sich erst danach aus.
+
+Rechtsklick macht aus der Karte die Einstellungen: links „Mit Windows starten“ zum Anhaken und „Kalibrierung“, das beim
+Drüberfahren −1 dB / +1 dB / Standard (106 dB) ausklappt; rechts der große „Beenden“-Knopf, darunter „Neu starten“ als Link.
+
+<p align="center"><img src="docs/einstellungen-ablauf.gif" width="820" alt="Rechtsklick auf das Ohr-Symbol: die Karte zeigt die Einstellungen, Kalibrierung klappt aus, +1 dB"></p>
 Die Karte ist milchig: Beim Öffnen fotografiert sie, was hinter ihr liegt, zeichnet es weich und legt eine dunkle Tönung darüber; große runde Ecken (49 px). Das Hintergrundbild wird nur beim Öffnen aufgenommen, weil Windows-Bildschirmkopien die Karte selbst mit einfangen würden.
 Fehler landen in `%LOCALAPPDATA%\Kopfhoererpegel\fehler.log` statt in einem Dialog.
 
@@ -38,7 +45,7 @@ WASAPI-Loopback auf dem AirPods-Stereo-Endpunkt (A2DP) → A-Bewertung → 1-Sek
 + Windows-Lautstärke der AirPods (Bluetooth-Hardwarelautstärke, Loopback liegt davor) + Kalibrierung (Standard 106 dB).
 Der Freisprech-Endpunkt (Hands-Free) wird absichtlich nicht geöffnet, damit die AirPods nicht in den Anrufmodus springen.
 
-Kalibrieren: gleiches Lied am iPhone und am PC bei gleicher Lautstärke vergleichen und per Rechtsklick ±1 dB anpassen.
+Kalibrieren: gleiches Lied am iPhone und am PC bei gleicher Lautstärke vergleichen und per Rechtsklick → Kalibrierung ±1 dB anpassen.
 Einstellung liegt in `%LOCALAPPDATA%\Kopfhoererpegel\einstellungen.txt`.
 
 ### Bauen / Testen
@@ -47,6 +54,9 @@ Einstellung liegt in `%LOCALAPPDATA%\Kopfhoererpegel\einstellungen.txt`.
 - `--probe <datei>` listet die Audio-Endpunkte und schreibt 4 s Messwerte in die Datei
 - `--demo` zeigt Fantasiewerte, `--show` öffnet die Karte gleich gepinnt
 - `--render-tray <ordner>` speichert alle Symbolzustände als PNG
+- `--render-icon <datei.ico>` erzeugt das App-Icon (`Kopfhoererpegel.ico`, wird beim Bauen eingebettet)
+- `--render-shots <ordner> <hintergrundbild>` rendert die README-Bilder und GIF-Einzelbilder (aufgeräumter Desktop,
+  nachgebaute Taskleiste, Mauszeiger); `python tools/gifs.py <ordner> docs` macht daraus `docs/*.gif` und `docs/*.png`
 
 ## Stream Deck
 
