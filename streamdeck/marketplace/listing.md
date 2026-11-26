@@ -25,6 +25,10 @@ AirPods and iPhone are trademarks of Apple Inc. This plugin is not affiliated wi
 - Source & free download: https://github.com/Hendrik4K/Kopfhoererpegel
 - Support / issues: https://github.com/Hendrik4K/Kopfhoererpegel/issues
 
+## Price
+0.99 EUR. Maker Console asks for the net price: check in the preview what buyers will pay incl. VAT
+(roughly 0.83 EUR net gives 0.99 EUR with 19 % VAT).
+
 ## Keywords
 AirPods, headphones, hearing, volume, dB, decibel, sound level, loudness, audio, health
 
