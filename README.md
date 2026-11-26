@@ -1,14 +1,14 @@
 # <img src="docs/icon.png" height="40" alt=""> Kopfhörerpegel <a href="README.en.md"><img align="right" src="docs/flag-gb.svg" height="22" alt="English" title="English"></a><a href="README.md"><img align="right" src="docs/flag-de.svg" height="22" alt="Deutsch" title="Deutsch"></a><img align="right" src="docs/sprache.svg" height="22" alt="Sprache" title="Sprache wählen">
 
-**Wie „Kopfhörerpegel“ auf dem iPhone, nur auf deinem Windows-PC: Fahr mit der Maus aufs Ohr in der Taskleiste und du siehst live, wie laut deine AirPods gerade sind.**
+**Wie der Kopfhörerpegel auf dem iPhone, nur für Windows: Sieh eine funktional gleiche Dezibel-Anzeige statt Prozenten. Deine AirPods, berechnet wie auf deinem Handy.**
 
 <p align="center"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6" alt="Windows 10 | 11"> <a href="https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest"><img src="https://img.shields.io/github/v/release/Hendrik4K/Kopfhoererpegel?label=Version&color=30D158" alt="Version"></a> <img src="https://img.shields.io/badge/Stream%20Deck-Plugin-1F1F1F" alt="Stream Deck Plugin"> <img src="https://img.shields.io/badge/AirPods-alle%20Modelle-555" alt="AirPods"></p>
 
 <p align="center"><img src="docs/pegel-ablauf.gif" width="820" alt="Maus auf das Ohr-Symbol in der Taskleiste: die Karte zeigt den Pegel live, von OK über Laut bis Sehr laut"></p>
 
-Grün heißt entspannt, gelb ab 80 dB heißt „mach mal leiser“, rot ab 90 dB heißt „deine Ohren schreiben gerade eine Beschwerde“. Die Leiste pulsiert mit dem Beat, die AirPods bleiben dabei im Musikmodus, und gemessen wird nur, was Windows sowieso an sie schickt. Kein Konto, kein Schnickschnack, ein Symbol in der Taskleiste.
+Super verständliche Oberfläche mit kleinen Warnungen, falls es mal zu laut wird. Selbsterklärend, einfach bedienbar.
 
-**⬇ Kostenlos:** [Releases](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest) → `Kopfhoererpegel.exe` (Tray-App) und `Headphone-Level.streamDeckPlugin` (Doppelklick installiert es in Stream Deck).
+**⬇ [Kostenlos für Windows](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest/download/Kopfhoererpegel.exe)** · **[Kostenlos für Stream Deck](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest/download/Headphone-Level.streamDeckPlugin)** (Doppelklick installiert es in Stream Deck)  
 **⭐ Gefällt’s dir? Lass einen Stern da!**
 Lieber unterstützen? Die gleiche Stream-Deck-Version gibt es für 0,99 € im Elgato Marketplace.
 

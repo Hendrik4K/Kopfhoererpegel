@@ -1,14 +1,14 @@
 # <img src="docs/icon.png" height="40" alt=""> Headphone Level <a href="README.en.md"><img align="right" src="docs/flag-gb.svg" height="22" alt="English" title="English"></a><a href="README.md"><img align="right" src="docs/flag-de.svg" height="22" alt="Deutsch" title="Deutsch"></a><img align="right" src="docs/sprache.svg" height="22" alt="Language" title="Choose language">
 
-**Like the headphone level on iPhone, but on your Windows PC: hover over the ear in the taskbar and see live how loud your AirPods are right now.**
+**Like the headphone level on iPhone, just for Windows: see a functionally identical decibel display instead of percentages. Your AirPods, calculated like on your phone.**
 
 <p align="center"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6" alt="Windows 10 | 11"> <a href="https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest"><img src="https://img.shields.io/github/v/release/Hendrik4K/Kopfhoererpegel?label=Version&color=30D158" alt="Version"></a> <img src="https://img.shields.io/badge/Stream%20Deck-Plugin-1F1F1F" alt="Stream Deck Plugin"> <img src="https://img.shields.io/badge/AirPods-all%20models-555" alt="AirPods"></p>
 
 <p align="center"><img src="docs/pegel-ablauf.gif" width="820" alt="Hovering over the ear icon in the taskbar: the card shows the live level, from OK through Loud to Very loud"></p>
 
-Green means relaxed, yellow from 80 dB means "maybe turn it down", red from 90 dB means "your ears are filing a complaint". The bar pulses with the beat, your AirPods stay in music mode, and the only thing measured is what Windows already sends to them. No account, no fuss, one icon in the taskbar.
+A super clear interface with small warnings in case it ever gets too loud. Self-explanatory, easy to use.
 
-**⬇ Free:** [Releases](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest) → `Kopfhoererpegel.exe` (tray app) and `Headphone-Level.streamDeckPlugin` (double-click installs it in Stream Deck).
+**⬇ [Free for Windows](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest/download/Kopfhoererpegel.exe)** · **[Free for Stream Deck](https://github.com/Hendrik4K/Kopfhoererpegel/releases/latest/download/Headphone-Level.streamDeckPlugin)** (double-click installs it in Stream Deck)  
 **⭐ Like it? Leave a star!**
 Want to support it? The same Stream Deck version is available for €0.99 on the Elgato Marketplace.
 
