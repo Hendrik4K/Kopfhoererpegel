@@ -1,0 +1,13 @@
+{
+  "Name": "Kopfhörerpegel",
+  "Category": "Kopfhörerpegel",
+  "Description": "Live-dB der AirPods auf einer Taste, wie „Kopfhörerpegel“ auf dem iPhone: Status, dB-Zahl und Segmentleiste, die mit dem Beat pulsiert. Blinkt rot, wenn es sehr laut wird. Drücken zeigt die letzten 60 Sekunden.",
+  "de.hendrik4k.kopfhoererpegel.pegel": {
+    "Name": "Pegel",
+    "Tooltip": "Live-dB der AirPods. Drücken wechselt zum Verlauf der letzten 60 Sekunden."
+  },
+  "de.hendrik4k.kopfhoererpegel.verlauf": {
+    "Name": "Verlauf",
+    "Tooltip": "Die letzten 60 Sekunden als Balken. Drücken wechselt zum Live-Pegel."
+  }
+}

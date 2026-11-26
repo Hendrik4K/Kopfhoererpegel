@@ -23,6 +23,9 @@ namespace Kopfhoererpegel
             Red = Color.FromArgb(0xFF, 0x45, 0x3A), Muted = Color.FromArgb(0x9E, 0x9E, 0x9E),
             Dark = Color.FromArgb(0x1C, 0x1C, 0x1C), Unlit = Color.FromArgb(0x2E, 0x2E, 0x31);
 
+        public static bool German;
+        static string T(string de, string en) { return German ? de : en; }
+
         static Color ColorOf(Status s)
         {
             return s == Status.VeryLoud ? Red : s == Status.Loud ? Yellow : s == Status.Ok ? Green : Muted;
@@ -39,7 +42,7 @@ namespace Kopfhoererpegel
             public Status Status = Status.Off;
             public double Level = double.NaN, Shown = ScaleMin - 10, Beat = 0.5;
             public int Front = -1;
-            public bool Muted;
+            public bool Muted, Blink;
             public double[] History = new double[0];
 
             public void Update(Reading r)
@@ -67,7 +70,7 @@ namespace Kopfhoererpegel
             // Everything the image depends on; equal signature = no need to send the image again.
             public string Signature(string view)
             {
-                var head = view + "|" + Status + "|" + Muted + "|" + (double.IsNaN(Level) ? "-" : Math.Round(Level).ToString());
+                var head = view + "|" + (Status == Status.VeryLoud && Blink) + "|" + Status + "|" + Muted + "|" + (double.IsNaN(Level) ? "-" : Math.Round(Level).ToString());
                 if (view == "verlauf")
                     return head + "|" + string.Join(",", History.Select(h => double.IsNaN(h) ? "-" : Math.Round(h).ToString()));
                 return head + "|" + Front + "|" + Step(Beat, FrontLevels) + "|" + Step(Beat, BackLevels);
@@ -125,21 +128,25 @@ namespace Kopfhoererpegel
             }
         }
 
-        static Bitmap Draw(Zustand z, string view)
+        static Bitmap Draw(Zustand z, string view, int size = 144)
         {
-            var bmp = new Bitmap(144, 144);
+            var bmp = new Bitmap(size, size);
             using (var g = Graphics.FromImage(bmp))
             {
+                g.ScaleTransform(size / 144f, size / 144f);
                 g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
                 using (var bg = new LinearGradientBrush(new Rectangle(0, 0, 144, 144), Color.FromArgb(0x2A, 0x2A, 0x2E), Color.FromArgb(0x14, 0x14, 0x16), 90f))
                     g.FillRectangle(bg, 0, 0, 144, 144);
+                if (z.Status == Status.VeryLoud && z.Blink)
+                    using (var warn = new LinearGradientBrush(new Rectangle(0, 0, 144, 144), Color.FromArgb(0x8C, Red), Color.FromArgb(0x40, Red), 90f))
+                        g.FillRectangle(warn, 0, 0, 144, 144);
 
                 if (z.Status == Status.Off)
                 {
                     Ear(g, 40, 22, 1.0f, Muted, 5.2f);
-                    Centered(g, "Nicht", F(19), Muted, 96);
-                    Centered(g, "verbunden", F(19), Muted, 118);
+                    Centered(g, T("Nicht", "Not"), F(19), Muted, 96);
+                    Centered(g, T("verbunden", "connected"), F(19), Muted, 118);
                     return bmp;
                 }
                 if (view == "verlauf") DrawHistory(g, z);
@@ -154,18 +161,19 @@ namespace Kopfhoererpegel
             var c = ColorOf(z.Status);
 
             // Status row: badge + text, centred together.
-            var text = z.Status == Status.Idle ? (z.Muted ? "Stumm" : "Pause") : z.Status == Status.Ok ? "OK" : z.Status == Status.Loud ? "Laut" : "Sehr laut";
+            var text = z.Status == Status.Idle ? (z.Muted ? T("Stumm", "Muted") : "Pause") : z.Status == Status.Ok ? "OK" : z.Status == Status.Loud ? T("Laut", "Loud") : T("Sehr laut", "Very loud");
             using (var f = F(21))
             {
                 var w = g.MeasureString(text, f, PointF.Empty, StringFormat.GenericTypographic).Width;
                 var x = (144 - (22 + 7 + w)) / 2;
-                Badge(g, z.Status, x, 13, 22);
-                using (var b = new SolidBrush(playing ? c : Muted)) g.DrawString(text, f, b, x + 29, 13 - 1, StringFormat.GenericTypographic);
+                var flash = z.Status == Status.VeryLoud && z.Blink;  // on the red flash: white badge and text
+                Badge(g, z.Status, x, 13, 22, flash ? Color.White : c);
+                using (var b = new SolidBrush(flash ? Color.White : playing ? c : Muted)) g.DrawString(text, f, b, x + 29, 13 - 1, StringFormat.GenericTypographic);
             }
 
             // Number + "dB"
             var number = playing ? Math.Round(z.Level).ToString("0") : "–";
-            var ink = z.Status == Status.Loud || z.Status == Status.VeryLoud ? c : playing ? Color.White : Muted;
+            var ink = z.Status == Status.VeryLoud && z.Blink ? Color.White : z.Status == Status.Loud || z.Status == Status.VeryLoud ? c : playing ? Color.White : Muted;
             using (var big = F(62))
             using (var unit = F(22))
             using (var b = new SolidBrush(ink))
@@ -199,7 +207,7 @@ namespace Kopfhoererpegel
             using (var b = new SolidBrush(Muted)) g.DrawString("60 s", f, b, 10, 12, StringFormat.GenericTypographic);
             var value = playing ? Math.Round(z.Level).ToString("0") + " dB" : "– dB";
             using (var f = F(25))
-            using (var b = new SolidBrush(z.Status == Status.Loud || z.Status == Status.VeryLoud ? c : playing ? Color.White : Muted))
+            using (var b = new SolidBrush(z.Status == Status.VeryLoud && z.Blink ? Color.White : z.Status == Status.Loud || z.Status == Status.VeryLoud ? c : playing ? Color.White : Muted))
             {
                 var w = g.MeasureString(value, f, PointF.Empty, StringFormat.GenericTypographic).Width;
                 g.DrawString(value, f, b, 134 - w, 9, StringFormat.GenericTypographic);
@@ -226,9 +234,8 @@ namespace Kopfhoererpegel
         }
 
         // Round badge (check / exclamation mark / dash) or the red warning triangle, size d at (x, y).
-        static void Badge(Graphics g, Status s, float x, float y, float d)
+        static void Badge(Graphics g, Status s, float x, float y, float d, Color c)
         {
-            var c = ColorOf(s);
             using (var mark = new Pen(Dark, d * 0.16f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
             using (var fill = new SolidBrush(c))
             {
@@ -301,32 +308,151 @@ namespace Kopfhoererpegel
         public static void SaveIcons(string dir)
         {
             Directory.CreateDirectory(dir);
-            // Monochrome white ear for the action list and the category (Stream Deck tints these itself).
+            // Monochrome white symbols on transparent for the action list and the category (Elgato guideline).
             foreach (var size in new[] { 20, 28, 40, 56 })
             {
+                var suffix = size == 40 || size == 56 ? "@2x.png" : ".png";
                 using (var bmp = new Bitmap(size, size))
                 using (var g = Graphics.FromImage(bmp))
                 {
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     var s = size / 64f * 1.3f;
                     Ear(g, size / 2f - 30 * s, size / 2f - 27 * s, s, Color.White, Math.Max(5.2f, 3.2f / s));
-                    var name = size == 20 ? "aktion.png" : size == 40 ? "aktion@2x.png" : size == 28 ? "kategorie.png" : "kategorie@2x.png";
-                    bmp.Save(Path.Combine(dir, name), ImageFormat.Png);
+                    bmp.Save(Path.Combine(dir, (size == 20 || size == 40 ? "aktion" : "kategorie") + suffix), ImageFormat.Png);
+                }
+                if (size == 28 || size == 56) continue;
+                using (var bmp = new Bitmap(size, size))
+                using (var g = Graphics.FromImage(bmp))
+                {
+                    // History action: five bars of different height
+                    float u = size / 20f;
+                    var heights = new[] { 6f, 10f, 15f, 11f, 8f };
+                    using (var b = new SolidBrush(Color.White))
+                        for (int i = 0; i < 5; i++) g.FillRectangle(b, (1.5f + i * 3.6f) * u, (18 - heights[i]) * u, 2.4f * u, heights[i] * u);
+                    bmp.Save(Path.Combine(dir, "verlauf" + suffix), ImageFormat.Png);
                 }
             }
-            // Plugin icon (store / plugin list) and the key's default image: a sample key.
-            var sample = new Zustand { Status = Status.Ok, Level = 72, Front = 10, Beat = 1 };
-            using (var key = Draw(sample, "pegel"))
+            // Plugin icon (256/512) and the default key images of both actions.
+            var sample = new Zustand { Status = Status.Ok, Level = 72, Front = 10, Beat = 1, History = SampleHistory() };
+            foreach (var e in new[] { Tuple.Create(256, "pegel", "plugin.png"), Tuple.Create(512, "pegel", "plugin@2x.png"),
+                                      Tuple.Create(72, "pegel", "taste.png"), Tuple.Create(144, "pegel", "taste@2x.png"),
+                                      Tuple.Create(72, "verlauf", "taste-verlauf.png"), Tuple.Create(144, "verlauf", "taste-verlauf@2x.png") })
+                using (var bmp = Draw(sample, e.Item2, e.Item1)) bmp.Save(Path.Combine(dir, e.Item3), ImageFormat.Png);
+        }
+
+        static double[] SampleHistory()
+        {
+            return Enumerable.Range(0, 60).Select(i => i < 8 ? double.NaN : 62 + 18 * Math.Sin(i / 6.0) + (i % 7)).ToArray();
+        }
+
+        // ---- Marketplace pictures (1920 x 960, English) -------------------------------------------------------------
+
+        public static void SaveStore(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            German = false;
+            var hist = SampleHistory();
+            Func<Status, double, int, double, bool, Zustand> st = (s, l, f, b, blink) =>
+                new Zustand { Status = s, Level = l, Front = f, Beat = b, Blink = blink, History = hist };
+
+            Store(dir, "thumbnail.png", g =>
             {
-                key.Save(Path.Combine(dir, "taste@2x.png"), ImageFormat.Png);
-                foreach (var e in new[] { Tuple.Create(72, "taste.png"), Tuple.Create(28, "plugin.png"), Tuple.Create(56, "plugin@2x.png"), Tuple.Create(288, "marketplace.png") })
-                    using (var small = new Bitmap(e.Item1, e.Item1))
-                    using (var g = Graphics.FromImage(small))
-                    {
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.DrawImage(key, 0, 0, e.Item1, e.Item1);
-                        small.Save(Path.Combine(dir, e.Item2), ImageFormat.Png);
-                    }
+                Title(g, "Headphone Level", "Live AirPods dB on your Stream Deck", 150, 250);
+                Keys(g, 610, 360, new[] { st(Status.Ok, 72, 10, 1, false), st(Status.Loud, 84, 12, 0.4, false), st(Status.VeryLoud, 93, 14, 0.8, true) },
+                     new string[3], "pegel");
+            });
+            Store(dir, "galerie-1.png", g =>
+            {
+                KeyAt(g, st(Status.Ok, 72, 10, 1, false), "pegel", 150, 180, 600);
+                Lines(g, 860, 230, "Like headphone level on iPhone",
+                    "• Live level in dB(A), updated every second", "• OK · Loud from 80 dB · Very loud from 90 dB",
+                    "• 18-segment bar that pulses with the beat", "• Measured passively, AirPods stay in music mode");
+            });
+            Store(dir, "galerie-2.png", g =>
+            {
+                KeyAt(g, st(Status.Loud, 84, 12, 0.4, false), "verlauf", 150, 180, 600);
+                Lines(g, 860, 230, "The last 60 seconds",
+                    "• Press the key to switch to the history", "• One bar per second in the status colour",
+                    "• Dashed line marks 80 dB", "• Or place the separate History action");
+            });
+            Store(dir, "galerie-3.png", g =>
+            {
+                Title(g, "Warns before it gets too loud", "The key flashes red while the level is very loud", 150, 250);
+                Keys(g, 600, 290, new[] { st(Status.Ok, 72, 10, 1, false), st(Status.Loud, 84, 12, 0.4, false),
+                                          st(Status.VeryLoud, 93, 14, 0.8, true), st(Status.Off, double.NaN, -1, 0.5, false) },
+                     new string[4], "pegel");
+            });
+        }
+
+        static void Store(string dir, string name, Action<Graphics> paint)
+        {
+            using (var bmp = new Bitmap(1920, 960))
+            using (var g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                using (var bg = new LinearGradientBrush(new Rectangle(0, 0, 1920, 960), Color.FromArgb(0x24, 0x26, 0x2C), Color.FromArgb(0x0E, 0x0E, 0x10), 60f))
+                    g.FillRectangle(bg, 0, 0, 1920, 960);
+                paint(g);
+                bmp.Save(Path.Combine(dir, name), ImageFormat.Png);
+            }
+        }
+
+        static void Title(Graphics g, string title, string sub, float y, float subY)
+        {
+            using (var f = new Font(Family, 84, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var f2 = new Font(Family, 42, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (var w = new SolidBrush(Color.White))
+            using (var m = new SolidBrush(Muted))
+            {
+                var fmt = StringFormat.GenericTypographic;
+                g.DrawString(title, f, w, (1920 - g.MeasureString(title, f, PointF.Empty, fmt).Width) / 2, y - 60, fmt);
+                g.DrawString(sub, f2, m, (1920 - g.MeasureString(sub, f2, PointF.Empty, fmt).Width) / 2, subY - 40, fmt);
+            }
+        }
+
+        static void Keys(Graphics g, float y, int size, Zustand[] keys, string[] captions, string view)
+        {
+            float gap = 60, total = keys.Length * size + (keys.Length - 1) * gap, x = (1920 - total) / 2;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                KeyAt(g, keys[i], view, x + i * (size + gap), y - size / 2f, size);
+                if (captions[i] == null) continue;
+                using (var f = new Font(Family, 34, FontStyle.Regular, GraphicsUnit.Pixel))
+                using (var b = new SolidBrush(Muted))
+                {
+                    var w = g.MeasureString(captions[i], f, PointF.Empty, StringFormat.GenericTypographic).Width;
+                    g.DrawString(captions[i], f, b, x + i * (size + gap) + (size - w) / 2, y + size / 2f + 24, StringFormat.GenericTypographic);
+                }
+            }
+        }
+
+        // A key with rounded corners and a soft shadow, like on the device.
+        static void KeyAt(Graphics g, Zustand z, string view, float x, float y, int size)
+        {
+            float r = size * 0.14f;
+            for (int i = 6; i > 0; i--)
+                using (var b = new SolidBrush(Color.FromArgb(10, 0, 0, 0)))
+                using (var p = Rounded(x - i * 2, y - i * 2 + 10, size + i * 4, size + i * 4, r + i * 2)) g.FillPath(b, p);
+            using (var key = Draw(z, view, size))
+            using (var tex = new TextureBrush(key))
+            using (var p = Rounded(x, y, size, size, r))
+            {
+                tex.TranslateTransform(x, y);
+                g.FillPath(tex, p);
+                using (var rim = new Pen(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF), 2)) g.DrawPath(rim, p);
+            }
+        }
+
+        static void Lines(Graphics g, float x, float y, string head, params string[] lines)
+        {
+            using (var f = new Font(Family, 64, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var f2 = new Font(Family, 40, FontStyle.Regular, GraphicsUnit.Pixel))
+            using (var w = new SolidBrush(Color.White))
+            using (var m = new SolidBrush(Color.FromArgb(0xC8, 0xC8, 0xCC)))
+            {
+                g.DrawString(head, f, w, x, y, StringFormat.GenericTypographic);
+                for (int i = 0; i < lines.Length; i++) g.DrawString(lines[i], f2, m, x, y + 130 + i * 72, StringFormat.GenericTypographic);
             }
         }
 
@@ -334,12 +460,13 @@ namespace Kopfhoererpegel
         public static void SaveSamples(string dir)
         {
             Directory.CreateDirectory(dir);
-            var hist = Enumerable.Range(0, 60).Select(i => i < 8 ? double.NaN : 62 + 18 * Math.Sin(i / 6.0) + (i % 7)).ToArray();
+            var hist = SampleHistory();
             var samples = new[]
             {
                 Tuple.Create("ok", new Zustand { Status = Status.Ok, Level = 72, Front = 10, Beat = 1 }),
                 Tuple.Create("laut", new Zustand { Status = Status.Loud, Level = 84, Front = 12, Beat = 0.3 }),
                 Tuple.Create("sehr-laut", new Zustand { Status = Status.VeryLoud, Level = 93, Front = 14, Beat = 0.7 }),
+                Tuple.Create("sehr-laut-blink", new Zustand { Status = Status.VeryLoud, Level = 93, Front = 14, Beat = 0.7, Blink = true }),
                 Tuple.Create("pause", new Zustand { Status = Status.Idle }),
                 Tuple.Create("aus", new Zustand { Status = Status.Off }),
             };

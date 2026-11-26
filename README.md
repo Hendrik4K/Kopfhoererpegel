@@ -52,3 +52,12 @@ Fehler landen in `%LOCALAPPDATA%\Kopfhoererpegel\streamdeck.log`.
 - `-Installieren` kopiert ihn nach `%APPDATA%\Elgato\StreamDeck\Plugins` und startet Stream Deck neu
 - `-Paket` erzeugt `Kopfhoererpegel.streamDeckPlugin` (Doppelklick installiert es auf jedem PC)
 - `kopfhoererpegel-streamdeck.exe --render <ordner>` speichert alle Tastenzustände als PNG
+- Zwei Aktionen: „Pegel“ und „Verlauf“ (Marketplace verlangt mindestens 2); bei „Sehr laut“ blinkt die Taste rot.
+  Texte auf der Taste folgen der Stream-Deck-Sprache (Deutsch/Englisch).
+
+### Elgato Marketplace
+
+- Prüfen und packen mit der Elgato-CLI (`npm install -g @elgato/cli`):
+  `streamdeck validate de.hendrik4k.kopfhoererpegel.sdPlugin` und `streamdeck pack de.hendrik4k.kopfhoererpegel.sdPlugin`
+- `kopfhoererpegel-streamdeck.exe --store streamdeck\marketplace` erzeugt Vorschaubild und 3 Galeriebilder (1920 × 960)
+- Texte für Maker Console: `streamdeck/marketplace/listing.md`

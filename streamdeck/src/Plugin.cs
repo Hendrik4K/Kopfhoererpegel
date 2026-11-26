@@ -34,10 +34,12 @@ namespace Kopfhoererpegel
         {
             AppDomain.CurrentDomain.UnhandledException += (s, e) => Log(e.ExceptionObject as Exception);
             if (args.Length > 1 && args[0] == "--icons") { Kachel.SaveIcons(args[1]); return 0; }
-            if (args.Length > 1 && args[0] == "--render") { Kachel.SaveSamples(args[1]); return 0; }
+            if (args.Length > 1 && args[0] == "--render") { Kachel.German = true; Kachel.SaveSamples(args[1]); return 0; }
+            if (args.Length > 1 && args[0] == "--store") { Kachel.SaveStore(args[1]); return 0; }
 
             string port = Arg(args, "-port"), uuid = Arg(args, "-pluginUUID"), register = Arg(args, "-registerEvent");
             if (port == null || uuid == null || register == null) return 1;
+            Kachel.German = LanguageFrom(Arg(args, "-info")) == "de";
             try
             {
                 socket = new ClientWebSocket();
@@ -48,6 +50,17 @@ namespace Kopfhoererpegel
             }
             catch (Exception e) { Log(e); }
             return 0;
+        }
+
+        // -info {"application":{"language":"de",...},...}: key texts in German or English.
+        static string LanguageFrom(string info)
+        {
+            try
+            {
+                var app = json.Deserialize<Dictionary<string, object>>(info)["application"] as Dictionary<string, object>;
+                return (app["language"] as string ?? "en").Substring(0, 2);
+            }
+            catch { return "en"; }
         }
 
         static string Arg(string[] args, string name)
@@ -87,7 +100,13 @@ namespace Kopfhoererpegel
                     lock (keys)
                     {
                         Key k;
-                        if (!keys.TryGetValue(context, out k)) keys[context] = k = new Key();
+                        if (!keys.TryGetValue(context, out k))
+                        {
+                            object action;
+                            keys[context] = k = new Key();
+                            // Two actions: "level" starts on the bar, "history" on the last 60 seconds.
+                            if (msg.TryGetValue("action", out action) && ((action as string) ?? "").EndsWith(".verlauf")) k.View = "verlauf";
+                        }
                         k.View = ViewFrom(msg) ?? k.View;
                         k.Last = "";
                         if (meter == null) StartMeter();
@@ -155,6 +174,7 @@ namespace Kopfhoererpegel
                     if (m == null || visible.Count == 0) continue;
                     if (++frame % 40 == 0) m.Calibration = LoadCalibration();
                     zustand.Update(m.Current);
+                    zustand.Blink = frame / 4 % 2 == 0;  // "Sehr laut": the key flashes red twice a second
                     foreach (var view in visible.Select(v => v.Value.View).Distinct())
                     {
                         var signature = zustand.Signature(view);

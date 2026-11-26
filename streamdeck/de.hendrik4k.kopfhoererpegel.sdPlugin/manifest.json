@@ -1,29 +1,55 @@
 {
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "UUID": "de.hendrik4k.kopfhoererpegel",
-  "Name": "Kopfhörerpegel",
+  "Name": "Headphone Level",
   "Author": "Hendrik4K",
-  "Description": "Live-dB der AirPods auf einer Taste, wie „Kopfhörerpegel“ auf dem iPhone: Status, dB-Zahl und Segmentleiste. Drücken wechselt zum Verlauf der letzten 60 Sekunden.",
+  "Description": "Live dB of your AirPods on a key, like the headphone level on iPhone: status, dB value and a segment bar that pulses with the beat. Flashes red when it gets very loud. Press to see the last 60 seconds.",
   "Version": "1.0.0.0",
-  "SDKVersion": 2,
-  "CodePathWin": "kopfhoererpegel-streamdeck.exe",
+  "SDKVersion": 3,
+  "CodePath": "kopfhoererpegel-streamdeck.exe",
   "Icon": "bilder/plugin",
-  "Category": "Kopfhörerpegel",
+  "Category": "Headphone Level",
   "CategoryIcon": "bilder/kategorie",
-  "URL": "https://github.com/Hendrik4K/Kopfhoererpegel",
   "OS": [
-    { "Platform": "windows", "MinimumVersion": "10" }
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
   ],
-  "Software": { "MinimumVersion": "6.0" },
+  "Software": {
+    "MinimumVersion": "6.9"
+  },
   "Actions": [
     {
       "UUID": "de.hendrik4k.kopfhoererpegel.pegel",
-      "Name": "Kopfhörerpegel",
-      "Tooltip": "Live-dB der AirPods; Drücken wechselt zwischen Pegel und 60-Sekunden-Verlauf.",
+      "Name": "Level",
+      "Tooltip": "Live dB of your AirPods. Press to switch to the last 60 seconds.",
       "Icon": "bilder/aktion",
-      "Controllers": ["Keypad"],
+      "Controllers": [
+        "Keypad"
+      ],
       "SupportedInMultiActions": false,
       "States": [
-        { "Image": "bilder/taste", "ShowTitle": false }
+        {
+          "Image": "bilder/taste",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "de.hendrik4k.kopfhoererpegel.verlauf",
+      "Name": "History",
+      "Tooltip": "The last 60 seconds as bars. Press to switch to the live level.",
+      "Icon": "bilder/verlauf",
+      "Controllers": [
+        "Keypad"
+      ],
+      "SupportedInMultiActions": false,
+      "States": [
+        {
+          "Image": "bilder/taste-verlauf",
+          "ShowTitle": false
+        }
       ]
     }
   ]
