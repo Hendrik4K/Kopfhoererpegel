@@ -3,6 +3,7 @@
 | Plattform | Ordner | Technik | Quellen |
 | --- | --- | --- | --- |
 | Windows | `src/`, `Bauen.ps1` | C# / WPF, WASAPI | AirPods in dB |
+| Stream Deck | [`streamdeck/`](#stream-deck) | C#-Plugin, nutzt dieselbe Messung | AirPods in dB auf einer Taste |
 | Linux | [`linux/`](linux/README.md) | Python / Qt, PulseAudio · PipeWire | AirPods/Kopfhörer in dB, Mikrofone und Ausgänge in %, Empfänger (dB, % oder Rohwert), Demo |
 
 Beide zeigen dieselbe Karte und dasselbe Tray-Symbol. Die Windows-App ist eigenständig; alles Plattformspezifische der
@@ -35,3 +36,19 @@ Einstellung liegt in `%LOCALAPPDATA%\Kopfhoererpegel\einstellungen.txt`.
 - `--probe <datei>` listet die Audio-Endpunkte und schreibt 4 s Messwerte in die Datei
 - `--demo` zeigt Fantasiewerte, `--show` öffnet die Karte gleich gepinnt
 - `--render-tray <ordner>` speichert alle Symbolzustände als PNG
+
+## Stream Deck
+
+Plugin `streamdeck/de.hendrik4k.kopfhoererpegel.sdPlugin`: Aktion „Kopfhörerpegel“ auf eine Taste ziehen.
+Die Taste zeigt Status mit Badge, dB-Zahl (bei Laut/Sehr laut in der Statusfarbe) und die 18-Segment-Leiste, deren vorderste
+Segmente wie auf der Karte mit dem Beat pulsieren. Drücken wechselt zum Verlauf der letzten 60 Sekunden (Balken in Statusfarbe,
+gestrichelte Linie bei 80 dB) und zurück. Ohne AirPods: Ohr + „Nicht verbunden“.
+
+Das Plugin misst selbst (`src/Meter.cs` + `src/CoreAudio.cs` werden mitkompiliert), läuft also auch ohne die Tray-App,
+und liest dieselbe Kalibrierung aus `einstellungen.txt`. Gemessen wird nur, solange eine Taste sichtbar ist.
+Fehler landen in `%LOCALAPPDATA%\Kopfhoererpegel\streamdeck.log`.
+
+- `streamdeck\Bauen.ps1` baut EXE und Bilder in den Plugin-Ordner
+- `-Installieren` kopiert ihn nach `%APPDATA%\Elgato\StreamDeck\Plugins` und startet Stream Deck neu
+- `-Paket` erzeugt `Kopfhoererpegel.streamDeckPlugin` (Doppelklick installiert es auf jedem PC)
+- `kopfhoererpegel-streamdeck.exe --render <ordner>` speichert alle Tastenzustände als PNG

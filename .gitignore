@@ -8,3 +8,5 @@ __pycache__/
 venv/
 # Test pictures
 *.png
+# Stream Deck package (streamdeck/Bauen.ps1 -Paket creates it)
+*.streamDeckPlugin

@@ -1,0 +1,30 @@
+{
+  "UUID": "de.hendrik4k.kopfhoererpegel",
+  "Name": "Kopfhörerpegel",
+  "Author": "Hendrik4K",
+  "Description": "Live-dB der AirPods auf einer Taste, wie „Kopfhörerpegel“ auf dem iPhone: Status, dB-Zahl und Segmentleiste. Drücken wechselt zum Verlauf der letzten 60 Sekunden.",
+  "Version": "1.0.0.0",
+  "SDKVersion": 2,
+  "CodePathWin": "kopfhoererpegel-streamdeck.exe",
+  "Icon": "bilder/plugin",
+  "Category": "Kopfhörerpegel",
+  "CategoryIcon": "bilder/kategorie",
+  "URL": "https://github.com/Hendrik4K/Kopfhoererpegel",
+  "OS": [
+    { "Platform": "windows", "MinimumVersion": "10" }
+  ],
+  "Software": { "MinimumVersion": "6.0" },
+  "Actions": [
+    {
+      "UUID": "de.hendrik4k.kopfhoererpegel.pegel",
+      "Name": "Kopfhörerpegel",
+      "Tooltip": "Live-dB der AirPods; Drücken wechselt zwischen Pegel und 60-Sekunden-Verlauf.",
+      "Icon": "bilder/aktion",
+      "Controllers": ["Keypad"],
+      "SupportedInMultiActions": false,
+      "States": [
+        { "Image": "bilder/taste", "ShowTitle": false }
+      ]
+    }
+  ]
+}
