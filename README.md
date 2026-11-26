@@ -30,7 +30,7 @@ Prüfe zuerst nur und frag mich vor jeder Änderung:
 2. Lade `Kopfhoererpegel.exe` und `Kopfhoererpegel.exe.sha256` aus dem neuesten GitHub-Release und vergleiche die SHA256. Bei Abweichung abbrechen.
 3. Schlag mir einen festen Ordner vor (z. B. `%USERPROFILE%\Documents\Kopfhoererpegel`), leg die exe nach meinem OK dort ab und entferne den Download-Vermerk (Unblock-File).
 4. Starte die exe nach meinem OK über `explorer.exe` (nicht als Kindprozess deiner Shell).
-5. Frag mich, ob sie mit Windows starten soll. Wenn ja: Rechtsklick aufs Ohr-Symbol → „Mit Windows starten“ anhaken (oder du legst nach meinem OK den Run-Eintrag „Kopfhoererpegel“ unter HKCU an).
+5. Frag mich, ob sie mit Windows starten soll. Wenn ja: Rechtsklick aufs Ohr-Symbol → „Mit Windows starten“ anhaken (oder du legst nach meinem OK den Run-Eintrag „Kopfhoererpegel“ unter HKCU an, Wert: `"<Pfad zur exe>" --autostart`).
 6. Frag mich, ob ich ein Elgato Stream Deck habe. Wenn ja: `Headphone-Level.streamDeckPlugin` samt .sha256 laden, Hash prüfen und erst nach meinem OK per Doppelklick installieren.
 7. Sag mir am Ende, wo das Ohr in der Taskleiste sitzt (eventuell im ^-Überlauf, dann in die Leiste ziehen) und wie ich per Rechtsklick → Kalibrierung ±1 dB an mein iPhone angleiche.
 Ändere nichts an meinen Audio-Einstellungen und installiere keine weitere Software.

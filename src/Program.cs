@@ -37,7 +37,9 @@ namespace Kopfhoererpegel
             using (var single = new Mutex(false, "Hendrik4K.Kopfhoererpegel"))
             {
                 // After "Neu starten" the new instance waits until the old one has let go.
-                try { if (!single.WaitOne(args.Contains("--restart") ? 10000 : 0)) return 0; }
+                // A second start only asks the running app to show its card (so a start never looks like nothing happened).
+                var wake = new EventWaitHandle(false, EventResetMode.AutoReset, "Hendrik4K.Kopfhoererpegel.Zeigen");
+                try { if (!single.WaitOne(args.Contains("--restart") ? 10000 : 0)) { wake.Set(); return 0; } }
                 catch (AbandonedMutexException) { }
                 demo = args.Contains("--demo");
                 var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
@@ -47,6 +49,8 @@ namespace Kopfhoererpegel
                 app.DispatcherUnhandledException += (s, e) => { Log(e.Exception); e.Handled = true; };
                 AppDomain.CurrentDomain.UnhandledException += (s, e) => Log(e.ExceptionObject as Exception);
                 meter = new Meter { Calibration = LoadSetting("Kalibrierung", 106) };
+                // Older autostart entries had no --autostart yet (without it Windows startup would show the start card).
+                if (AutostartOn()) SetAutostart(true);
                 if (!demo) meter.Start();
                 popup = new Popup();
                 // Create the window handle (and its frosted backdrop) now, not in the middle of a tray mouse event.
@@ -96,7 +100,7 @@ namespace Kopfhoererpegel
                     if (!popup.IsVisible) return;
                     popup.Animate(r);
                     if (frame++ % 8 == 0) popup.Render(r);
-                    if (popup.Pinned || popup.FadingOut) return;
+                    if (popup.Pinned || popup.FadingOut || DateTime.Now < noticeUntil) return;
                     // The card stays while the mouse is on the icon or on the card, and goes a moment after it left both.
                     if (CursorOnIcon() || popup.CursorOnCard()) outsideSince = DateTime.MaxValue;
                     else if (outsideSince == DateTime.MaxValue) outsideSince = DateTime.Now;
@@ -104,6 +108,10 @@ namespace Kopfhoererpegel
                 };
                 timer.Start();
                 if (args.Contains("--show")) app.Dispatcher.BeginInvoke(new Action(() => { Open(); popup.Pinned = true; }));
+                // Started by hand (not by Windows autostart or "Neu starten"): show the card for a few seconds.
+                else if (!args.Contains("--autostart") && !args.Contains("--restart"))
+                    app.Dispatcher.BeginInvoke(new Action(ShowNotice), DispatcherPriority.ApplicationIdle);
+                new Thread(() => { while (wake.WaitOne()) app.Dispatcher.BeginInvoke(new Action(ShowNotice)); }) { IsBackground = true }.Start();
                 app.Run();
                 tray.Dispose();
                 single.ReleaseMutex();
@@ -119,6 +127,25 @@ namespace Kopfhoererpegel
             opening = true;
             try { OpenCard(); }
             finally { opening = false; }
+        }
+
+        static DateTime noticeUntil = DateTime.MinValue;
+
+        // The card for 4 seconds: with AirPods above the ear as usual, without them bottom right with
+        // "Kopfhörerpegel läuft · Nicht verbunden" (the ear itself stays hidden until they connect).
+        static void ShowNotice()
+        {
+            if (popup.IsVisible && !popup.FadingOut) return;
+            popup.ShowView(false, true);
+            popup.ShowRunning(true);
+            noticeUntil = DateTime.Now.AddSeconds(4);
+            outsideSince = DateTime.MaxValue;
+            if (tray.Visible) { Open(); return; }
+            var r = Current();
+            popup.Render(r);
+            popup.Animate(r);
+            var wa = Forms.Screen.PrimaryScreen.WorkingArea;
+            popup.ShowAtTray(wa.Right - 160, wa.Right - 160, wa.Bottom);
         }
 
         static void OpenCard()
@@ -404,7 +431,7 @@ namespace Kopfhoererpegel
         {
             using (var k = Registry.CurrentUser.CreateSubKey(RunKey))
             {
-                if (on) k.SetValue("Kopfhoererpegel", "\"" + Forms.Application.ExecutablePath + "\"");
+                if (on) k.SetValue("Kopfhoererpegel", "\"" + Forms.Application.ExecutablePath + "\" --autostart");
                 else k.DeleteValue("Kopfhoererpegel", false);
             }
         }

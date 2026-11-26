@@ -39,6 +39,10 @@ namespace Kopfhoererpegel
         static readonly int MarkIndex = (int)((LoudFrom - ScaleMin) / 5);  // the taller segment starts at 80 dB
 
         readonly TextBlock status = new TextBlock(), value = new TextBlock();
+        readonly TextBlock title;
+
+        // Start notice: "Kopfhörerpegel läuft" as the title, so a start without AirPods is still visible.
+        public void ShowRunning(bool on) { title.Text = on ? "Kopfhörerpegel läuft" : "Kopfhörerpegel"; }
         readonly Ellipse statusDot = new Ellipse();
         readonly Path statusMark = new Path();
         readonly Rectangle[] segments = new Rectangle[Segments];
@@ -73,7 +77,7 @@ namespace Kopfhoererpegel
             SizeToContent = SizeToContent.WidthAndHeight;
             FontFamily = DisplayFont;
 
-            var title = new TextBlock { Text = "Kopfhörerpegel", FontSize = 15, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Muted) };
+            title = new TextBlock { Text = "Kopfhörerpegel", FontSize = 15, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(Muted) };
 
             // Status: round icon (check / exclamation mark / dash) + text on the left, dB value on the right
             statusDot.Width = statusDot.Height = 22;
@@ -201,7 +205,7 @@ namespace Kopfhoererpegel
             Opacity = fadeFrom + (fadeTo - fadeFrom) * eased;
             if (t < 1) return;
             fade.Stop();
-            if (FadingOut) { Hide(); FadingOut = false; ShowView(false, true); }
+            if (FadingOut) { Hide(); FadingOut = false; ShowView(false, true); ShowRunning(false); }
         }
 
         static TextBlock Label(string text, double x, bool centered)
